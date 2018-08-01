@@ -1,9 +1,45 @@
 #define PIXEL_C
 
-#include "../config.h"
+#include "config.h"
 
 extern "C" {
 	#include "pixel.h"
+}
+
+
+#include <Adafruit_NeoPixel.h>
+
+// Which pin on the Arduino is connected to the NeoPixels?
+// On a Trinket or Gemma we suggest changing this to 1
+#define PIN            5
+
+// How many NeoPixels are attached to the Arduino?
+#define NUMPIXELS      256
+
+// When we setup the NeoPixel library, we tell it how many pixels, and which pin to use to send signals.
+// Note that for older NeoPixel strips you might need to change the third parameter--see the strandtest
+// example for more information on possible values.
+Adafruit_NeoPixel pixels = Adafruit_NeoPixel(NUMPIXELS, PIN, NEO_GRB + NEO_KHZ800);
+
+color_t colorMap[NUMPLANE+1] = {{0, 0, 0}, {10, 0, 0}, {50, 0, 0}, {150, 0, 0}};
+const unsigned char shl_table[] = {0x01,0x02,0x04,0x08,0x10,0x20,0x40,0x80};
+uint8_t mapPix[16][16];
+
+void initMap() {
+  uint8_t i = 0;
+  for (uint8_t x = 0; x < 16; x++) {
+    for (uint8_t y = 0; y < 16; y++) {
+      uint8_t y2 = ((x % 2) == 0 ? y : 15-y);
+      mapPix[x][y2] = i++;
+    }
+  }
+}
+
+unsigned char pixmap[NUMPLANE][NUM_ROWS][LINEBYTES];
+
+void pixel_init() {
+  initMap();
+  pixels.begin();
 }
 
 void clear_screen(unsigned char value) {
@@ -16,6 +52,30 @@ void clear_screen(unsigned char value) {
 		for(i=0;i<NUM_ROWS*LINEBYTES;i++)
 			pix[i]=v;
 	}
+}
+
+void show() {
+  for (short x = 0; x < NUM_COLS; x++) {
+    for (short y = 0; y < NUM_ROWS; y++) {
+      short col = 0;
+      for (short level = 0; level < NUMPLANE; level++) {
+        if (pixmap[level][y % NUM_ROWS][x / 8] & (1 << x % 8)) {
+          col = level + 1;
+        }
+      }
+      color_t *c = &colorMap[col];
+      pixels.setPixelColor(mapPix[x][y], pixels.Color(c->r, c->g, c->b)); 
+    }
+  }
+  pixels.show(); // This sends the updated pixel color to the hardware.
+}
+
+void b2d_wait(int ms) {
+  long lastTime = millis(), curTime;
+  show();
+  do {
+    curTime = millis();
+  } while ((curTime - lastTime) >= ms);
 }
 
 void setpixel(pixel p, unsigned char value ){
@@ -34,7 +94,7 @@ void setpixel(pixel p, unsigned char value ){
 
 
 //shifts pixmap left. It is really shifted right, but because col0 is left in the Display it's left.
-void shift_pixmap_l(){
+void shift_pixmap_l() {
 	unsigned char plane, row, byte;
 	
 	for(plane=0; plane<NUMPLANE; plane++){
