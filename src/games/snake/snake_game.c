@@ -26,13 +26,13 @@
 
 #if defined MENU_SUPPORT && defined GAME_SNAKE
 // snake icon (MSB is leftmost pixel)
-static const uint8_t icon[8] PROGMEM =
+static const uint8_t icon_snake[8] PROGMEM =
 	{0xff, 0x81, 0xbd, 0xa5, 0xa5, 0xad, 0xa1, 0xbf};
 
 game_descriptor_t snake_game_descriptor =
 {
 	&snake_game,
-	icon,
+	icon_snake,
 };
 #endif
 
@@ -337,7 +337,7 @@ static void snake_autoRoute(snake_protagonist_t *pprotSnake,
 					return;
 				}
 			}
-			pprotSnake->dir = (pprotSnake->dir + 1u) % 4u;
+			pprotSnake->dir = (snake_dir_t) ((pprotSnake->dir + 1u) % 4u);
 		}
 		else
 		{

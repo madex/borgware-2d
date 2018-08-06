@@ -66,7 +66,7 @@ typedef struct tetris_bastet_variant_s
 }
 tetris_bastet_variant_t;
 
-tetris_variant_t const tetrisBastetVariant;
+extern tetris_variant_t const tetrisBastetVariant;
 
 
 /****************************

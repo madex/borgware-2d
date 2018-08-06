@@ -1,11 +1,12 @@
 #define PIXEL_C
 
+
 #include "config.h"
 
 #include "pixel.h"
 #include "borg_hw/borg_hw.h"
 
-unsigned char shl_table[] = {0x01,0x02,0x04,0x08,0x10,0x20,0x40,0x80};
+unsigned char const shl_table[] = {0x01,0x02,0x04,0x08,0x10,0x20,0x40,0x80};
 
 void clear_screen(unsigned char value){
 	unsigned char p,*pix,v=0xff;
@@ -93,3 +94,5 @@ void line(pixel p1,
 		}
 	}
 }
+
+

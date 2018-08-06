@@ -3,7 +3,7 @@
 
 #define LINEBYTES (((NUM_COLS-1)/8)+1)
 
-extern unsigned char shl_table[];
+extern const unsigned char shl_table[];
 extern unsigned char pixmap[NUMPLANE][NUM_ROWS][LINEBYTES];
 
 typedef struct {
@@ -69,7 +69,7 @@ inline static unsigned char get_next_pixel(pixel p, direction_t dir){
 
 
 inline static direction_t direction_r(direction_t dir){
-	return (dir + 1u) % 4u;
+	return (direction_t) ((dir + 1u) % 4u);
 }
 
 

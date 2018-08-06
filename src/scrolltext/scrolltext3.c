@@ -305,14 +305,13 @@ unsigned char blobNextCommand(blob_t *blob)
 }
 
 
-static blob_t *setupBlob(char *str)
-{
+static blob_t *setupBlob(char *str) {
 	static unsigned char chop_cnt;
 	static char *last; static char delim[] = "#";
 	static char *lastcommands;
 	unsigned int tmp;
 
-	blob_t *blob = malloc(sizeof(blob_t));
+	blob_t *blob = (blob_t*) malloc(sizeof(blob_t));
 
 	if (str) {
 #ifndef AVR
@@ -327,8 +326,10 @@ static blob_t *setupBlob(char *str)
 	if (!chop_cnt) {
 		blob->commands = strtok_r(str, delim, &last);
 
-		if (blob->commands == 0)
-			goto fail;
+		if (blob->commands == 0) {
+			free(blob);
+			return 0;//no more blobs to parse
+		}
 
 		if ((tmp = getnum(blob)) != 0xFFFF) {
 			chop_cnt = tmp;
@@ -343,9 +344,10 @@ static blob_t *setupBlob(char *str)
 
 	blob->str = strtok_r(NULL, delim, &last);
 
-	if (blob->str == 0)
-		goto fail;
-
+	if (blob->str == 0) {
+		free(blob);
+		return 0;//no more blobs to parse
+	}
 	blob->fontIndex = fonts[0].fontIndex;
 	blob->fontData = fonts[0].fontData;
 	blob->font_storebytes = fonts[0].storebytes;
@@ -400,10 +402,6 @@ static blob_t *setupBlob(char *str)
 	blob->waitfor = wait_new;
 
 	return blob;
-
-fail:
-	free(blob);
-	return 0;//no more blobs to parse
 }
 
 

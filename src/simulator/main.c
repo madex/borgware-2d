@@ -90,6 +90,8 @@ void drawLED(int color, float pos_x, float pos_y, float pos_z) {
  */
 void display(void) {
 	int x, y, z, level, color;
+	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+	glMatrixMode(GL_MODELVIEW);
 	tbReshape(WindWidth, WindHeight);
 	glClear(GL_COLOR_BUFFER_BIT);
 	glPushMatrix();
@@ -206,20 +208,17 @@ void motion(int x, int y) {
  * @param height Height of the window.
  */
 void reshape(int width, int height) {
-
 	tbReshape(width, height);
-
 	glViewport(0, 0, width, height);
-
 	glMatrixMode(GL_PROJECTION);
 	glLoadIdentity();
-	gluPerspective(60.0, (float) WindWidth / (float) WindWidth, 5., 1000.);
-	gluLookAt(NUM_ROWS * 2., NUM_ROWS * 2. + 50., NUM_COLS * 2., NUM_ROWS * 2.,
-			NUM_ROWS * 2., NUM_COLS * 2., 0.0, 0.0, 1.0);
+	gluPerspective(65.0, (float) width / (float) height, 5., 1000.);
+	gluLookAt((NUM_ROWS - 1) * 2., (NUM_COLS - 1) * 4,   (NUM_COLS - 1) * 2.,
+			  (NUM_ROWS - 1) * 2., (NUM_COLS - 1) * 2.,  (NUM_COLS - 1) * 2., 
+			  0.0,                  0.0,                  1.0);
 	glMatrixMode(GL_MODELVIEW);
 	glLoadIdentity();
-
-	WindWidth = width;
+	WindWidth  = width;
 	WindHeight = height;
 }
 
@@ -251,7 +250,6 @@ static void special(int k, int x, int y) {
 	glutPostRedisplay();
 }
 
-
 /**
  * Entry point for starting the display loop thread.
  * @param unused Not used. Only here to satisfy signature constraints.
@@ -274,9 +272,10 @@ int main(int argc, char **argv) {
 	glutInit(&argc, argv);
 	glutInitDisplayMode(GLUT_RGB | GLUT_DEPTH | GLUT_DOUBLE);
 	glutInitWindowSize(WindHeight, WindWidth);
-	win = glutCreateWindow("16x16 Borg Simulator");
+	win = glutCreateWindow("Borgware-2D Simulator");
 
 	// callback
+    glutReshapeFunc(reshape);
 	glutDisplayFunc(display);
 	glutIdleFunc(display);
 	glutSetKeyRepeat(GLUT_KEY_REPEAT_OFF);
@@ -288,10 +287,6 @@ int main(int argc, char **argv) {
 
 	// clearcolor & main loop
 	glClearColor(0, 0, 0, 1.0);
-	gluPerspective(60.0, (float) WindWidth / (float) WindWidth, 5., 1000.);
-	gluLookAt(NUM_COLS * 2., NUM_COLS * 2. + 50., NUM_ROWS * 2., NUM_COLS * 2.,
-			NUM_COLS * 2., NUM_ROWS * 2., 0.0, 0.0, 1.0);
-
 	// init Call List for LED
 	GLUquadric* quad = gluNewQuadric();
 	glNewList(0, GL_COMPILE);

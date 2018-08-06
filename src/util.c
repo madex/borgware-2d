@@ -1,5 +1,5 @@
 #include "config.h"
-
+#ifdef __AVR__
 #include <avr/io.h>
 #include <setjmp.h>
 
@@ -140,3 +140,4 @@ void b2d_wait(int ms) {
 #endif
 	}
 }
+#endif

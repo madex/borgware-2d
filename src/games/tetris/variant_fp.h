@@ -34,7 +34,7 @@
 void tetris_fp(void);
 
 
-tetris_variant_t const tetrisFpVariant;
+extern tetris_variant_t const tetrisFpVariant;
 
 
 /*********************

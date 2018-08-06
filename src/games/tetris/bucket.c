@@ -105,7 +105,7 @@ static void tetris_bucket_hoverStatus(tetris_bucket_t *pBucket)
 	// status depends on whether the piece touches the dump or not
 	// NOTE: 0 == TETRIS_BUS_HOVERING, 1 == TETRIS_BUS_GLIDING,
 	//       tetris_bucket_collision(...) either returns 0 or 1
-	pBucket->status = tetris_bucket_collision(pBucket, pBucket->nColumn,
+	pBucket->status = (tetris_bucket_status_t) tetris_bucket_collision(pBucket, pBucket->nColumn,
 			pBucket->nRow + 1);
 }
 

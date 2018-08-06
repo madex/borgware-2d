@@ -19,8 +19,9 @@ typedef struct percnt_s {
 	uint8_t  B0_7[RING_SIZE];
 } percnt_t;
 
+#ifndef EEROM_COMPAT_H
 #include "../compat/eeprom.h"
-
+#endif
 extern uint8_t  g_reset_counter_idx;
 extern percnt_t g_reset_counter;
 

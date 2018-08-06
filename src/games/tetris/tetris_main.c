@@ -74,7 +74,7 @@ void tetris_main(tetris_variant_t const *const pVariantMethods)
 
 		// a piece is hovering and can be controlled by the player
 		case TETRIS_BUS_HOVERING:
-		case TETRIS_BUS_GLIDING:
+		case TETRIS_BUS_GLIDING: {
 			// if the piece is gliding the input module has to grant us
 			// a minimum amount of time to move it
 			if (tetris_bucket_getStatus(pBucket) == TETRIS_BUS_GLIDING)
@@ -169,7 +169,7 @@ void tetris_main(tetris_variant_t const *const pVariantMethods)
 			// variant object
 			tetris_input_setBearing(pIn,
 					pVariantMethods->getBearing(pVariantData));
-
+			}
 			break;
 
 		// the piece has irrevocably hit the ground

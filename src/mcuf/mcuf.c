@@ -1,6 +1,6 @@
 
 #include "uart.h"
-#include "pixel.h"
+#include "../pixel.h"
 
 #define my_uart_getc uart_getc
 

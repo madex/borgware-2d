@@ -59,7 +59,7 @@ static void brick_damage (int8_t in_x, int8_t in_y)
 	if ((*playfield)[in_x][in_y] >= bs || (*playfield)[in_x][in_y] == 0)
 		return;
 
-	(*playfield)[in_x][in_y] -= 1;
+	(*playfield)[in_x][in_y] = (game_field_t) ((*playfield)[in_x][in_y] - 1);
 	score_add (1);
 }
 

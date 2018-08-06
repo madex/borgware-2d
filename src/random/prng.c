@@ -10,14 +10,14 @@
 #include <string.h>
 #include "noekeon.h"
 
-uint8_t random_state[16];
-uint8_t random_key[16];
+uint8_t random_state[16] __attribute__((aligned(4)));
+uint8_t random_key[16]   __attribute__((aligned(4)));
 
 uint8_t random8(void){
 	static uint8_t sr[16];
 	static uint8_t i=0;	
 	
-	if(i==0){
+	if (i==0) {
 		noekeon_enc(random_state, random_key);
 		memcpy(sr, random_state, 16);
 		i=15;

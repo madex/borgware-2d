@@ -112,15 +112,15 @@ void tetris_fp_setLastInput(void *pVariantData,
 		if (inCmd == TETRIS_INCMD_ROT_CW)
 		{
 			// piece rotated clockwise -> rotate bucket counter-clockwise
-			pStdVariant->nBearing += 3;
+			pStdVariant->nBearing = (tetris_bearing_t) (pStdVariant->nBearing + 3);
 		}
 		else if (inCmd == TETRIS_INCMD_ROT_CCW)
 		{
 			// piece rotated counter-clockwise -> rotate bucket clockwise
-			pStdVariant->nBearing += 1;
+			pStdVariant->nBearing = (tetris_bearing_t) (pStdVariant->nBearing + 1);
 		}
 	}
-	pStdVariant->nBearing %= 4;
+	pStdVariant->nBearing = (tetris_bearing_t) (pStdVariant->nBearing % 4);
 }
 
 /*@}*/

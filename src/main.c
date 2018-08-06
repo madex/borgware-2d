@@ -1,4 +1,4 @@
-
+#ifdef __AVR__
 #include <setjmp.h>
 #include <avr/interrupt.h>
 #include <avr/pgmspace.h>
@@ -53,3 +53,4 @@ int main (void){
 	display_loop();
 	return 0;
 }
+#endif

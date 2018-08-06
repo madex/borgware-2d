@@ -57,8 +57,8 @@ static void create_stone(stone_t *stone)
 	stone->x = RANDOM8() % (NUM_COLS - 4);
 
 	//random shape at random angle (untyped enums rock! yay!)
-	stone->piece.shape = RANDOM8() % 7;
-	stone->piece.angle = RANDOM8() % 4;
+	stone->piece.shape = (tetris_piece_shape_t) (RANDOM8() % 7);
+	stone->piece.angle = (tetris_piece_angle_t) (RANDOM8() % 4);
 
 	//chose a random speed from 1-2
 	stone->speed = (RANDOM8() % YSCALE) + 1;

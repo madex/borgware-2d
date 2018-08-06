@@ -49,7 +49,8 @@ void tetris_highscore_saveHighScore(tetris_highscore_index_t nIndex,
 	if (nHighScore > tetris_highscore_retrieveHighScore(nIndex))
 	{
 		eeprom_busy_wait();
-		eeprom_write_word(EEP_TETRIS + offsetof(tetris_highscore_table_t, nHighScore[nIndex]), nHighScore);
+		eeprom_write_word((uint16_t*) (EEP_TETRIS + offsetof(tetris_highscore_table_t, nHighScore[nIndex])), 
+		                  nHighScore);
 	}
 }
 
@@ -64,7 +65,7 @@ uint16_t tetris_highscore_retrieveHighScoreName(tetris_highscore_index_t nIdx)
 {
 	eeprom_busy_wait();
 	uint16_t nHighScoreName =
-			eeprom_read_word(EEP_TETRIS + offsetof(tetris_highscore_table_t, nHighScoreName[nIdx]));
+			eeprom_read_word((uint16_t*) (EEP_TETRIS + offsetof(tetris_highscore_table_t, nHighScoreName[nIdx])));
 
 	return nHighScoreName;
 }
@@ -80,7 +81,8 @@ void tetris_highscore_saveHighScoreName(tetris_highscore_index_t nIndex,
                                         uint16_t nHighscoreName)
 {
 	eeprom_busy_wait();
-	eeprom_write_word(EEP_TETRIS + offsetof(tetris_highscore_table_t, nHighScoreName[nIndex]), nHighscoreName);
+	eeprom_write_word((uint16_t*) (EEP_TETRIS + offsetof(tetris_highscore_table_t, nHighScoreName[nIndex])), 
+						nHighscoreName);
 }
 
 

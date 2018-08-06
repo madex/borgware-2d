@@ -129,7 +129,7 @@ inline static void tetris_piece_rotate(tetris_piece_t *pPc,
 
 	// we just rotate through the available angles in the given direction and
 	// wrap around (via modulo) where appropriate
-	pPc->angle = (pPc->angle + nRotation) % 4;
+	pPc->angle = (tetris_piece_angle_t) ((pPc->angle + nRotation) % 4);
 }
 
 

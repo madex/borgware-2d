@@ -50,7 +50,7 @@ typedef struct tetris_standard_variant_s
 tetris_standard_variant_t;
 
 
-tetris_variant_t const tetrisStdVariant;
+extern tetris_variant_t const tetrisStdVariant;
 
 
 /****************************

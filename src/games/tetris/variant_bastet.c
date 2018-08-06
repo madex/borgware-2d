@@ -250,11 +250,11 @@ static void tetris_bastet_evaluatePieces(tetris_bastet_variant_t *pBastet)
 	for (uint8_t nBlock = TETRIS_PC_LINE; nBlock <= TETRIS_PC_Z; ++nBlock)
 	{
 		int16_t nMaxScore = INT16_MIN;
-		tetris_piece_setShape(pPiece, nBlock);
+		tetris_piece_setShape(pPiece, (tetris_piece_shape_t) nBlock);
 		uint8_t nAngleCount = tetris_piece_getAngleCount(pPiece);
 		for (uint8_t nAngle = TETRIS_PC_ANGLE_0; nAngle < nAngleCount; ++nAngle)
 		{
-			tetris_piece_setAngle(pPiece, nAngle);
+			tetris_piece_setAngle(pPiece, (tetris_piece_angle_t) nAngle);
 			for (int8_t nCol = -3; nCol < nWidth; ++nCol)
 			{
 				int16_t nScore = tetris_bastet_evaluateMove(pBastet,
@@ -262,7 +262,7 @@ static void tetris_bastet_evaluatePieces(tetris_bastet_variant_t *pBastet)
 				nMaxScore = nMaxScore > nScore ? nMaxScore : nScore;
 			}
 		}
-		pBastet->nPieceScore[nBlock].shape = nBlock;
+		pBastet->nPieceScore[nBlock].shape = (tetris_piece_shape_t) nBlock;
 		pBastet->nPieceScore[nBlock].nScore = nMaxScore;
 	}
 	tetris_piece_destruct(pPiece);
