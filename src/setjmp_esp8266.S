@@ -53,7 +53,7 @@
 
    Much like other ABIs, this version just saves the necessary registers
    to the stack and restores them later.  Much less needs to be done.  */
-
+/*
 #include "xtensa-asm.h"
 
 #define SYS_nop	0
@@ -61,7 +61,7 @@
 
 #if XCHAL_HAVE_WINDOWED && !__XTENSA_CALL0_ABI__
 
-/* int setjmp (jmp_buf env) */
+// int setjmp (jmp_buf env)
 
 	.text
 	.align	4
@@ -71,13 +71,13 @@
 setjmp:
 	entry	sp, 16
 
-	/* Flush registers.  */
+	// Flush registers.
 	mov	a4, a2			// save a2 (jmp_buf)
 	movi	a2, SYS_nop
 	syscall
 	mov	a2, a4			// restore a2
 
-	/* Copy the register save area at (sp - 16).  */
+	// Copy the register save area at (sp - 16).
 	addi	a5, a1, -16
 	l32i	a3, a5, 0
 	l32i	a4, a5, 4
@@ -88,7 +88,7 @@ setjmp:
 	s32i	a3, a2, 8
 	s32i	a4, a2, 12
 
-	/* Copy 0-8 words from the register overflow area.  */
+	// Copy 0-8 words from the register overflow area.
 	extui	a3, a0, 30, 2
 	blti	a3, 2, .Lendsj
 	l32i	a7, a1, 4
@@ -110,7 +110,7 @@ setjmp:
 	blt	a5, a7, .Lsjloop
 .Lendsj:
 
-	/* Copy the register save area at sp.  */
+	// Copy the register save area at sp.
 	l32i	a3, a1, 0
 	l32i	a4, a1, 4
 	s32i	a3, a2, 48
@@ -120,7 +120,7 @@ setjmp:
 	s32i	a3, a2, 56
 	s32i	a4, a2, 60
 
-	/* Save the return address, including the window size bits.  */
+	// Save the return address, including the window size bits.
 	s32i	a0, a2, 64
 
 	movi	a2, 0
@@ -128,7 +128,7 @@ setjmp:
 	.size	setjmp, . - setjmp
 
 
-/* void longjmp (jmp_buf env, int val) */
+// void longjmp (jmp_buf env, int val) 
 
 	.align	4
 	.literal_position
@@ -136,18 +136,18 @@ setjmp:
 	.type	longjmp, @function
 longjmp:
 	entry	sp, 16
-	/*  a2 == &env, a3 == val  */
+	//  a2 == &env, a3 == val 
 
 #if XCHAL_MAYHAVE_ERRATUM_XEA1KWIN
-  /* Using this register triggers early any overflow that a kernel-mode
-     level-one interrupt might otherwise cause.  */
+  // Using this register triggers early any overflow that a kernel-mode
+  // level-one interrupt might otherwise cause.
 # define AR_WB	a15
 #else
-  /* Using this register is more efficient; it triggers less overflows.  */
+  // Using this register is more efficient; it triggers less overflows.
 # define AR_WB	a5
 #endif
-	/* Invalidate all but the current window;
-	   set WindowStart to (1 << WindowBase).  */
+	// Invalidate all but the current window;
+  // set WindowStart to (1 << WindowBase).
 	rsr	AR_WB, WINDOWBASE
 	movi	a4, 1
 	ssl	AR_WB
@@ -155,15 +155,15 @@ longjmp:
 	wsr	a4, WINDOWSTART
 	rsync
 
-	/* Return to the return address of the setjmp, using the
-	   window size bits from the setjmp call so that the caller
-	   will be able to find the return value that we put in a2.  */
+	// Return to the return address of the setjmp, using the
+	// window size bits from the setjmp call so that the caller
+	// will be able to find the return value that we put in a2.
 
 	l32i	a0, a2, 64
 
-	/* Copy the first 4 saved registers from jmp_buf into the save area
-	   at the current sp so that the values will be restored to registers
-	   when longjmp returns.  */
+	// Copy the first 4 saved registers from jmp_buf into the save area
+	// at the current sp so that the values will be restored to registers
+	// when longjmp returns.
 
 	addi	a7, a1, -16
 	l32i	a4, a2, 0
@@ -175,7 +175,7 @@ longjmp:
 	s32i	a4, a7, 8
 	s32i	a5, a7, 12
 
-	/* Copy the remaining 0-8 saved registers.  */
+	// Copy the remaining 0-8 saved registers
 	extui	a7, a0, 30, 2
 	blti	a7, 2, .Lendlj
 	l32i	a8, a2, 52
@@ -197,11 +197,11 @@ longjmp:
 	blt	a6, a8, .Lljloop
 .Lendlj:
 
-	/* The 4 words saved from the register save area at the target's
-	   sp are copied back to the target procedure's save area.  The
-	   only point of this is to prevent a catastrophic failure in
-	   case the contents were moved by an alloca after calling
-	   setjmp.  This is a bit paranoid but it doesn't cost much.  */
+	// The 4 words saved from the register save area at the target's
+	// sp are copied back to the target procedure's save area.  The
+	// only point of this is to prevent a catastrophic failure in
+	// case the contents were moved by an alloca after calling
+	 setjmp.  This is a bit paranoid but it doesn't cost much. 
 
 	l32i	a7, a2, 4		// load the target stack pointer
 	addi	a7, a7, -16		// find the destination save area
@@ -214,14 +214,14 @@ longjmp:
 	s32i	a4, a7, 8
 	s32i	a5, a7, 12
 
-	/* Return val ? val : 1.  */
+	/* Return val ? val : 1. 
 	movi	a2, 1
 	movnez	a2, a3, a3
 
 	retw
 	.size	longjmp, . - longjmp
 
-#else /* CALL0 ABI */
+#else // CALL0 ABI
 
 	.text
 	.align	4
@@ -250,11 +250,69 @@ longjmp:
 	l32i	a14, a2, 16
 	l32i	a15, a2, 20
 	l32i	a1, a2, 4
-	/* Return val ? val : 1.  */
+	// Return val ? val : 1.
 	movi	a2, 1
 	movnez	a2, a3, a3
 
 	ret
 	.size	longjmp, .-longjmp
 
-#endif /* CALL0 ABI */
+#endif // CALL0 ABI */
+/*
+  setjmp.S
+  
+  replacement for the closed-source version (Call0 ABI) included with the 
+  ESP8266 SDK, see also include/machine/setjmp.h 
+  
+  (tius2000)
+*/
+
+
+  .text
+  
+//=============================================================================
+//  int _setjmp(jmp_buf context)
+  
+  .align  4
+  .literal_position
+  .global setjmp
+  .type setjmp, @function
+
+setjmp: 
+  s32i.n  a0, a2, 0 
+  s32i.n  a1, a2, 4
+  s32i.n  a12, a2, 8
+  s32i.n  a13, a2, 12
+  s32i.n  a14, a2, 16
+  s32i.n  a15, a2, 20
+  
+  movi.n  a2, 0
+  
+  ret.n
+  
+  .size setjmp, . - setjmp
+  
+
+//=============================================================================
+//  void _longjmp(jmp_buf context, int val)
+  
+  .align  4
+  .literal_position
+  .global longjmp
+  .type longjmp, @function
+  
+longjmp:
+  l32i.n  a0, a2, 0
+  l32i.n  a12, a2, 8
+  l32i.n  a13, a2, 12
+  l32i.n  a14, a2, 16
+  l32i.n  a15, a2, 20
+  l32i.n  a1, a2, 4
+  
+  //  if (!val) val = 1
+  movi.n  a2, 1
+  movnez  a2, a3, a3
+  
+  ret.n
+  
+  .size longjmp, .-longjmp

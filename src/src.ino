@@ -1,5 +1,6 @@
 #include "config.h"
 extern "C" {
+    #include <setjmp.h>
     #include "pixel.h"
     //#include "mcuf/mcuf.c"
     #include "display_loop.h"
@@ -86,10 +87,17 @@ extern "C" {
 
 // Which pin on the Arduino is connected to the NeoPixels?
 // On a Trinket or Gemma we suggest changing this to 1
-#define PIN            5
+#define PIN            D1
 
 // How many NeoPixels are attached to the Arduino?
 #define NUMPIXELS      256
+
+// joystick Pins
+const int pin_joy_fire  =  A0; 
+const int pin_joy_up    =  D5;
+const int pin_joy_down  =  D6;
+const int pin_joy_right =  D7;
+const int pin_joy_left  =  D8;
 
 // When we setup the NeoPixel library, we tell it how many pixels, and which pin to use to send signals.
 // Note that for older NeoPixel strips you might need to change the third parameter--see the strandtest
@@ -107,7 +115,7 @@ void initMap() {
   for (uint8_t x = 0; x < 16; x++) {
     for (uint8_t y = 0; y < 16; y++) {
       uint8_t y2 = ((x % 2) == 0) ? y : 15-y;
-      mapPix[x][y2] = i++;
+      mapPix[15-x][y2] = i++;
     }
   }
 }
@@ -131,6 +139,7 @@ void show() {
 }
 
 extern "C" {
+//=============================================================================
 
   void eeprom_write_byte(uint8_t *p, uint8_t value) {
     EEPROM.write((uint32_t) p, value);
@@ -148,29 +157,51 @@ extern "C" {
   }
   
   void b2d_wait(int ms) {
-    static long lastTime = millis();
-    static long lastTimeShow = lastTime-8;
+    static long lastTime = 0;
+    static long lastTimeShow = -20;
     long start = millis();
-    if ((start - lastTimeShow) > 8) {
+    if ((start - lastTimeShow) >= 20) {
       lastTimeShow = start;
       show();
+      delay(0);
     }
+    fakeport = ((digitalRead(pin_joy_fire)  == LOW) ? 0x01 : 0) |
+               ((digitalRead(pin_joy_left)  == LOW) ? 0x02 : 0) |
+               ((digitalRead(pin_joy_right) == LOW) ? 0x04 : 0) |
+               ((digitalRead(pin_joy_down)  == LOW) ? 0x08 : 0) |
+               ((digitalRead(pin_joy_up)    == LOW) ? 0x10 : 0);
     long cur;
-    delay(1);
+    #ifdef JOYSTICK_SUPPORT
+		if (waitForFire) {
+			if (JOYISFIRE) {
+        Serial.println(fakeport, HEX);
+				//longjmp(newmode_jmpbuf, 0xFEu);
+			}
+		}
+    #endif
     do {
       cur = millis();
       if (lastTime > cur) {
         lastTime -= (1 << 31);
       }
+      if ((cur - start) > 2) {
+        delay(1);
+        start = cur;
+      }   
     } while ((cur - lastTime) < ms);
-    lastTime += ms;
+    lastTime = cur;
   }
 }
 
-    
 void setup() {
   initMap();
+  pinMode(pin_joy_fire,  INPUT_PULLUP);
+  pinMode(pin_joy_up,    INPUT_PULLUP);
+  pinMode(pin_joy_down,  INPUT_PULLUP);
+  pinMode(pin_joy_right, INPUT_PULLUP);
+  pinMode(pin_joy_left,  INPUT_PULLUP);
   pixels.begin();
+  EEPROM.begin(512);
   Serial.begin(115200);
 }
 
