@@ -1,0 +1,27 @@
+{
+    "files.associations": {
+        "stdio.h": "c",
+        "pgmspace.h": "c",
+        "joystick.h": "c",
+        "types.h": "c",
+        "borg_hw.h": "c",
+        "blackhole.c": "cpp",
+        "matrix.c": "cpp",
+        "main.c": "cpp",
+        "moire.c": "cpp",
+        "user_loop.c": "cpp",
+        "util.c": "cpp",
+        "eeprom_reserve.c": "cpp",
+        "display_loop.c": "cpp",
+        "font_c64.c": "cpp",
+        "joystick.c": "cpp",
+        "font_uni53.c": "cpp",
+        "rfm12_joystick.c": "cpp",
+        "scrolltext3.c": "cpp",
+        "mcuf.c": "cpp",
+        "sstream": "cpp",
+        "variant_std.h": "c",
+        "util.h": "c",
+        "ios": "cpp"
+    }
+}

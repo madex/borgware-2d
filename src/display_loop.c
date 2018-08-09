@@ -50,7 +50,6 @@
 #ifdef JOYSTICK_SUPPORT
 #  include "joystick/joystick.h"
 #endif
-
 #include "user/user_loop.h"
 
 volatile unsigned char oldMode, oldOldmode, reverseMode, mode;
@@ -65,6 +64,9 @@ void tetris_fp(void);
 void borg_invaders(void);
 void borg_breakout(unsigned char demomode);
 #endif
+void startGameMenu(void) {
+  longjmp(newmode_jmpbuf, 0xFEu);
+}
 
 void display_loop(){
 //	mcuf_serial_mode();
@@ -73,7 +75,7 @@ void display_loop(){
 	percnt_inc(&g_reset_counter, &g_reset_counter_idx);
 #endif
 	mode = setjmp(newmode_jmpbuf);
-
+  if (mode == 0) mode = 3;
 #ifdef JOYSTICK_SUPPORT
 	// in case we get here via mode jump, we (re)enable joystick queries
 	waitForFire = 1;

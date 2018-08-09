@@ -73,7 +73,7 @@ extern "C" {
     #include "animations/matrix.c"
     void pixel_init();
 }
-
+#include "HexDump.h"
 volatile unsigned char fakeport = 0;
 uint8_t waitForFire = 0;
 
@@ -93,11 +93,11 @@ extern "C" {
 #define NUMPIXELS      256
 
 // joystick Pins
-const int pin_joy_fire  =  A0; 
-const int pin_joy_up    =  D5;
+const int pin_joy_fire  =  D0; 
+const int pin_joy_up    =  D3;
 const int pin_joy_down  =  D6;
 const int pin_joy_right =  D7;
-const int pin_joy_left  =  D8;
+const int pin_joy_left  =  D4;
 
 // When we setup the NeoPixel library, we tell it how many pixels, and which pin to use to send signals.
 // Note that for older NeoPixel strips you might need to change the third parameter--see the strandtest
@@ -134,7 +134,12 @@ void show() {
       pixels.setPixelColor(mapPix[x][y], pixels.Color(c->r, c->g, c->b)); 
     }
   }
-  //HexDump(Serial, pixels.getPixels(), pixels.numPixels()*3);
+  //hexdump(pixels.getPixels(), pixels.numPixels()*3);
+  static jmp_buf jmp_buf_old; 
+  if (memcmp(jmp_buf_old, newmode_jmpbuf, sizeof jmp_buf_old) != 0) {
+    HexDump(Serial, newmode_jmpbuf, sizeof newmode_jmpbuf); 
+    memcpy(jmp_buf_old, newmode_jmpbuf, sizeof jmp_buf_old);
+  }
   pixels.show(); // This sends the updated pixel color to the hardware.
 }
 
@@ -165,17 +170,23 @@ extern "C" {
       show();
       delay(0);
     }
+    static uint8_t fakeport_old;
     fakeport = ((digitalRead(pin_joy_fire)  == LOW) ? 0x01 : 0) |
                ((digitalRead(pin_joy_left)  == LOW) ? 0x02 : 0) |
                ((digitalRead(pin_joy_right) == LOW) ? 0x04 : 0) |
                ((digitalRead(pin_joy_down)  == LOW) ? 0x08 : 0) |
                ((digitalRead(pin_joy_up)    == LOW) ? 0x10 : 0);
+    if (fakeport_old != fakeport) {
+        fakeport_old = fakeport;
+        Serial.print("fakeport = ");
+        Serial.println(fakeport, HEX);
+    }
     long cur;
     #ifdef JOYSTICK_SUPPORT
 		if (waitForFire) {
 			if (JOYISFIRE) {
-        Serial.println(fakeport, HEX);
-				//longjmp(newmode_jmpbuf, 0xFEu);
+        //Serial.println(fakeport, HEX);
+				startGameMenu();
 			}
 		}
     #endif
@@ -203,6 +214,10 @@ void setup() {
   pixels.begin();
   EEPROM.begin(512);
   Serial.begin(115200);
+#ifdef DEBUG_ESP_PORT
+  Serial.println("hat DEBUG_ESP_PORT");
+#endif
+  
 }
 
 void loop() {
