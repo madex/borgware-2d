@@ -1,4 +1,4 @@
-#ifdef __AVR__
+#ifndef ARDUINO
 #include <setjmp.h>
 #include <avr/interrupt.h>
 #include <avr/pgmspace.h>

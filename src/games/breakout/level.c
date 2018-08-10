@@ -51,9 +51,8 @@ static game_field_t level_field (uint8_t in_x, uint8_t in_y, uint8_t in_lvl)
 			if (in_y == (NUM_ROWS / 2) &&
 				(in_x > (NUM_COLS / 4)) && (in_x < (NUM_COLS - (NUM_COLS / 4))))
 				return bs;
-
 			/* intentional fallthrough: the rest of level 3 is like level 2 */
-
+			/* FALLTHRU */
 		case 2:
 			/* space for the lower third of the level */
 			if (in_y > (NUM_ROWS / 3))

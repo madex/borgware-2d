@@ -111,7 +111,7 @@ uint16_t tetris_highscore_retrieveHighScore(tetris_highscore_index_t nIndex)
 {
 	eeprom_busy_wait();
 	uint16_t nHighScore =
-			eeprom_read_word((uint16_t*) (EEP_TETRIS + offsetof(tetris_highscore_table_t, nHighScore[nIndex])));
+			eeprom_read_word((uint16_t*) (EEP_TETRIS + offsetof(tetris_highscore_table_t, nHighScore) + 2*nIndex));
 
 	// a score of 65535 is most likely caused by uninitialized EEPROM addresses
 	return nHighScore == UINT16_MAX ? 0 : nHighScore;

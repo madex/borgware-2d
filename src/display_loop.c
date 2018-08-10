@@ -64,7 +64,7 @@ void tetris_fp(void);
 void borg_invaders(void);
 void borg_breakout(unsigned char demomode);
 #endif
-void startGameMenu(void) {
+void start_game_menu(void) {
   longjmp(newmode_jmpbuf, 0xFEu);
 }
 

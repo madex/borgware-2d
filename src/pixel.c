@@ -1,6 +1,5 @@
 #define PIXEL_C
 
-
 #include "config.h"
 
 #include "pixel.h"
@@ -49,7 +48,6 @@ void shift_pixmap_l(){
 		}
 	}
 }
-
 
 unsigned char get_pixel(pixel p){
 

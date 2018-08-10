@@ -73,7 +73,7 @@ extern "C" {
     #include "animations/matrix.c"
     void pixel_init();
 }
-#include "HexDump.h"
+//#include "HexDump.h"
 volatile unsigned char fakeport = 0;
 uint8_t waitForFire = 0;
 
@@ -87,22 +87,34 @@ extern "C" {
 
 // Which pin on the Arduino is connected to the NeoPixels?
 // On a Trinket or Gemma we suggest changing this to 1
-#define PIN            D1
+
 
 // How many NeoPixels are attached to the Arduino?
 #define NUMPIXELS      256
 
+#ifdef ESP8266
+const int pin_ws2812    =  D1;
 // joystick Pins
 const int pin_joy_fire  =  D0; 
 const int pin_joy_up    =  D3;
 const int pin_joy_down  =  D6;
 const int pin_joy_right =  D7;
 const int pin_joy_left  =  D4;
+#else
+const int pin_ws2812    =  6;
+// joystick Pins
+const int pin_joy_fire  =  1; 
+const int pin_joy_up    =  2;
+const int pin_joy_down  =  3;
+const int pin_joy_right =  4;
+const int pin_joy_left  =  5;
 
+
+#endif
 // When we setup the NeoPixel library, we tell it how many pixels, and which pin to use to send signals.
 // Note that for older NeoPixel strips you might need to change the third parameter--see the strandtest
 // example for more information on possible values.
-Adafruit_NeoPixel pixels = Adafruit_NeoPixel(NUMPIXELS, PIN, NEO_GRB + NEO_KHZ800);
+Adafruit_NeoPixel pixels = Adafruit_NeoPixel(NUMPIXELS, pin_ws2812, NEO_GRB + NEO_KHZ800);
 typedef struct {
   unsigned char r, g, b;
 } color_t;
@@ -134,12 +146,6 @@ void show() {
       pixels.setPixelColor(mapPix[x][y], pixels.Color(c->r, c->g, c->b)); 
     }
   }
-  //hexdump(pixels.getPixels(), pixels.numPixels()*3);
-  static jmp_buf jmp_buf_old; 
-  if (memcmp(jmp_buf_old, newmode_jmpbuf, sizeof jmp_buf_old) != 0) {
-    HexDump(Serial, newmode_jmpbuf, sizeof newmode_jmpbuf); 
-    memcpy(jmp_buf_old, newmode_jmpbuf, sizeof jmp_buf_old);
-  }
   pixels.show(); // This sends the updated pixel color to the hardware.
 }
 
@@ -148,11 +154,15 @@ extern "C" {
 
   void eeprom_write_byte(uint8_t *p, uint8_t value) {
     EEPROM.write((uint32_t) p, value);
+#ifdef ESP8266    
     EEPROM.commit();
+#endif
   }
   void eeprom_write_word(uint16_t *p, uint16_t value) {
     EEPROM.write((uint32_t) p, value);
+    #ifdef ESP8266    
     EEPROM.commit();
+    #endif
   }
   uint8_t  eeprom_read_byte (const uint8_t *p) {
     return (uint8_t) EEPROM.read((uint32_t) p);
@@ -176,17 +186,16 @@ extern "C" {
                ((digitalRead(pin_joy_right) == LOW) ? 0x04 : 0) |
                ((digitalRead(pin_joy_down)  == LOW) ? 0x08 : 0) |
                ((digitalRead(pin_joy_up)    == LOW) ? 0x10 : 0);
-    if (fakeport_old != fakeport) {
+    /*if (fakeport_old != fakeport) {
         fakeport_old = fakeport;
         Serial.print("fakeport = ");
         Serial.println(fakeport, HEX);
-    }
+    }*/
     long cur;
     #ifdef JOYSTICK_SUPPORT
 		if (waitForFire) {
 			if (JOYISFIRE) {
-        //Serial.println(fakeport, HEX);
-				startGameMenu();
+				start_game_menu();
 			}
 		}
     #endif
@@ -212,12 +221,10 @@ void setup() {
   pinMode(pin_joy_right, INPUT_PULLUP);
   pinMode(pin_joy_left,  INPUT_PULLUP);
   pixels.begin();
+#ifdef ESP8266
   EEPROM.begin(512);
-  Serial.begin(115200);
-#ifdef DEBUG_ESP_PORT
-  Serial.println("hat DEBUG_ESP_PORT");
 #endif
-  
+  Serial.begin(115200);
 }
 
 void loop() {

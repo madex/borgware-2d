@@ -1,7 +1,8 @@
 #include "config.h"
-#ifdef __AVR__
+#ifndef ARDUINO
 #include <avr/io.h>
 #include <setjmp.h>
+#include "display_loop.h"
 
 #ifdef JOYSTICK_SUPPORT
 #  include "joystick/joystick.h"
@@ -91,7 +92,7 @@ void b2d_wait(int ms) {
 			//PORTJOYGND &= ~(1<<BITJOY0);
 			//PORTJOYGND &= ~(1<<BITJOY1);
 			if (JOYISFIRE) {
-				longjmp(newmode_jmpbuf, 0xFEu);
+				start_game_menu();
 			}
 		}
 #endif
