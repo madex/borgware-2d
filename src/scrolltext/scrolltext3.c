@@ -314,7 +314,7 @@ static blob_t *setupBlob(char *str) {
 	blob_t *blob = (blob_t*) malloc(sizeof(blob_t));
 
 	if (str) {
-#ifndef AVR
+#ifndef AVR 
 		// on non-AVR archs strtok_r fails for some reason if it operates on a
 		// string which is located on another stack frame, so we need our own copy
 		memcpy(blob->scrolltextBuffer, str, SCROLLTEXT_BUFFER_SIZE);
@@ -536,10 +536,9 @@ static void drawBlob(blob_t *blob)
 }
 
 extern jmp_buf newmode_jmpbuf;
-
+jmp_buf tmp_jmpbuf;
 void scrolltext(char *str)
 {
-	jmp_buf tmp_jmpbuf;
 	char tmp_str[SCROLLTEXT_BUFFER_SIZE];
 	int ljmp_retval;
 

@@ -75,7 +75,7 @@ void display_loop(){
 	percnt_inc(&g_reset_counter, &g_reset_counter_idx);
 #endif
 	mode = setjmp(newmode_jmpbuf);
-  if (mode == 0) mode = 3;
+  //if (mode == 0) mode = 3;
 #ifdef JOYSTICK_SUPPORT
 	// in case we get here via mode jump, we (re)enable joystick queries
 	waitForFire = 1;
