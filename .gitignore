@@ -59,3 +59,4 @@ src/scrolltext/obj_sim
 src/simulator/obj_sim
 src/smallani/obj_avr
 src/smallani/obj_sim
+src/wlan_key.h

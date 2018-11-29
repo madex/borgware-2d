@@ -144,17 +144,16 @@ void IRAM_ATTR joyEsp(uint32_t pin,  uint8_t *dataRead, uint32_t numBytes) {
     uint8_t *p, *end, pix, mask, bit = 0;
     uint32_t t, period, c, startTime;
     uint32_t pinMask   = _BV(pin);
-    uint32_t pinMask2  = _BV(D1);
     uint8_t cmd[] = {0x40, 0x03, 0x02};
     p         =  cmd;
     end       =  p + sizeof(cmd);
     pix       = *p++;
     mask      = 0x80;
     period    = CYCLES_4US;
-    //GPIO_REG_WRITE(GPIO_OUT_W1TS_ADDRESS, pinMask2);
     GPIO_REG_WRITE(GPIO_OUT_W1TS_ADDRESS, pinMask); 
     myPinMode(pin, OUTPUT); 
     // send
+    //cli();
     while (1) {
         startTime = getCycleCount();                                       // Save start time
         GPIO_REG_WRITE(GPIO_OUT_W1TC_ADDRESS, pinMask);        // Set high
@@ -175,21 +174,18 @@ void IRAM_ATTR joyEsp(uint32_t pin,  uint8_t *dataRead, uint32_t numBytes) {
     while((getCycleCount() - startTime) < t);
     GPIO_REG_WRITE(GPIO_OUT_W1TS_ADDRESS, pinMask);
     p = dataRead; 
-    //GPIO_REG_WRITE(GPIO_OUT_W1TC_ADDRESS, pinMask2);
     myPinMode(pin, INPUT);
+    GPIO_REG_WRITE(GPIO_OUT_W1TC_ADDRESS, pinMask);
     if (numBytes) {
       startTime = getCycleCount();
       uint8_t buf = 0U;
       while (((getCycleCount() - startTime) < period*4) && (GPIP(pin) == 1));
-      //GPIO_REG_WRITE(GPIO_OUT_W1TS_ADDRESS, pinMask2); 
       if (GPIP(pin) == 1) {
           return; // not connected
       } else {
           for (;;) {                         // Bit high duration
               startTime = getCycleCount();
-              //GPIO_REG_WRITE(GPIO_OUT_W1TS_ADDRESS, pinMask2);
-              while ((getCycleCount() - startTime) < CYCLES_2US-100); // Wait for bit start   
-              //GPIO_REG_WRITE(GPIO_OUT_W1TC_ADDRESS, pinMask2);
+              while ((getCycleCount() - startTime) < CYCLES_2US-120); // Wait for bit start   
               buf <<= 1;
               buf |= GPIP(pin);
               bit++;
@@ -278,12 +274,14 @@ extern "C" {
     static long lastTime = 0;
     static long lastTimeShow = -20;
     long start = millis();
+    uint8_t data[4];
     if ((start - lastTimeShow) >= 20) {
       lastTimeShow = start;
       show();
       #ifdef GAMECUBE
-      uint8_t data[4];
+      
       joyEsp(pin_gc, data, sizeof data);
+      
       bool up    = ((data[1] & 0x08) != 0) || (data[3] > 0xa0);
       bool down  = ((data[1] & 0x04) != 0) || ((data[3] < 0x60) && (data[3] > 0));
       bool left  = ((data[1] & 0x01) != 0) || ((data[2] < 0x60) && (data[2] > 0));
@@ -312,11 +310,11 @@ extern "C" {
     if (fakeport_old != fakeport) {
         fakeport_old = fakeport;
         Serial.print("fakeport = ");
-        Serial.println(fakeport, HEX);
+        Serial.printf("%02x  data = %02x %02x %02x\n", fakeport, data[0], data[1], data[2]);
     }
 
 		if (waitForFire) {
-			if (JOYISFIRE) {
+			if (fakeport == 1) {  //if (JOYISFIRE) {
 				start_game_menu();
 			}
 		}
@@ -408,13 +406,13 @@ void setup() {
     delay ( 500 );
     Serial.print ( "." );
   }
-
+  
   Serial.println ( "" );
   Serial.print ( "Connected to " );
   Serial.println ( WLAN_SSID );
   Serial.print ( "IP address: " );
   Serial.println ( WiFi.localIP() );
-
+  
   if ( MDNS.begin ( "borg" ) ) {
     Serial.println ( "MDNS responder started" );
   }
@@ -428,6 +426,10 @@ void setup() {
   server.onNotFound(handleNotFound);
   server.begin();
   Serial.println("HTTP server started");
+  char test[256];
+  IPAddress ip = WiFi.localIP();
+  sprintf(test, "</# WLAN=" WLAN_SSID " ip= %d.%d.%d.%d", ip[0], ip[1], ip[2], ip[3]);
+  scrolltext(test);
 }
 
 void loop() {
