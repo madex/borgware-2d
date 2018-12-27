@@ -22,6 +22,10 @@
         "sstream": "cpp",
         "variant_std.h": "c",
         "util.h": "c",
-        "ios": "cpp"
+        "ios": "cpp",
+        "makros.h": "c",
+        "iterator": "c",
+        "string": "c",
+        "string_view": "c"
     }
 }

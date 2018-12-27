@@ -124,6 +124,7 @@ static inline uint32_t getCycleCount(void) {
   return ccount;
 }
 
+
 void IRAM_ATTR myPinMode(uint8_t pin, uint8_t mode) {
     if (mode == OUTPUT) {
       GPF(pin) = GPFFS(GPFFS_GPIO(pin));//Set mode to GPIO
@@ -153,7 +154,7 @@ void IRAM_ATTR joyEsp(uint32_t pin,  uint8_t *dataRead, uint32_t numBytes) {
     GPIO_REG_WRITE(GPIO_OUT_W1TS_ADDRESS, pinMask); 
     myPinMode(pin, OUTPUT); 
     // send
-    //cli();
+    noInterrupts();
     while (1) {
         startTime = getCycleCount();                                       // Save start time
         GPIO_REG_WRITE(GPIO_OUT_W1TC_ADDRESS, pinMask);        // Set high
@@ -175,7 +176,7 @@ void IRAM_ATTR joyEsp(uint32_t pin,  uint8_t *dataRead, uint32_t numBytes) {
     GPIO_REG_WRITE(GPIO_OUT_W1TS_ADDRESS, pinMask);
     p = dataRead; 
     myPinMode(pin, INPUT);
-    GPIO_REG_WRITE(GPIO_OUT_W1TC_ADDRESS, pinMask);
+    GPIO_REG_WRITE(GPIO_OUT_W1TS_ADDRESS, pinMask);
     if (numBytes) {
       startTime = getCycleCount();
       uint8_t buf = 0U;
@@ -185,9 +186,10 @@ void IRAM_ATTR joyEsp(uint32_t pin,  uint8_t *dataRead, uint32_t numBytes) {
       } else {
           for (;;) {                         // Bit high duration
               startTime = getCycleCount();
-              while ((getCycleCount() - startTime) < CYCLES_2US-120); // Wait for bit start   
+              while ((getCycleCount() - startTime) < CYCLES_2US-100); // Wait for bit start   
               buf <<= 1;
               buf |= GPIP(pin);
+              //GPIO_REG_WRITE(GPIO_OUT_W1TC_ADDRESS, _BV(D2));
               bit++;
               if (bit >= 8) {
                   *p++ = buf;
@@ -196,11 +198,14 @@ void IRAM_ATTR joyEsp(uint32_t pin,  uint8_t *dataRead, uint32_t numBytes) {
                   numBytes--;
                   if (numBytes == 0) break;
               }
-              while ((getCycleCount() - startTime) < CYCLES_3US+100) {}
+              while ((GPIP(pin) == 0) && ((getCycleCount() - startTime) < CYCLES_3US+100)) {}
+              //GPIO_REG_WRITE(GPIO_OUT_W1TS_ADDRESS, _BV(D2));
               while ((GPIP(pin) == 1) && ((getCycleCount() - startTime) < (CYCLES_3US+CYCLES_2US))) {}
           }
       }
     }
+    interrupts();
+    GPIO_REG_WRITE(GPIO_OUT_W1TS_ADDRESS, _BV(D2));
 }
 #endif
 
@@ -273,10 +278,10 @@ extern "C" {
   void b2d_wait(int ms) {
     static long lastTime = 0;
     static long lastTimeShow = -20;
-    long start = millis();
-    uint8_t data[4];
-    if ((start - lastTimeShow) >= 20) {
-      lastTimeShow = start;
+    long now = millis();
+    uint8_t data[8] = {0, 0, 0, 0, 0, 0, 0, 0};
+    if ((now - lastTimeShow) >= 20) {
+      lastTimeShow = now;
       show();
       #ifdef GAMECUBE
       
@@ -288,12 +293,12 @@ extern "C" {
       bool right = ((data[1] & 0x02) != 0) || (data[2] > 0xa0);
       bool fire  = (data[0] & 0x01) != 0;
       fakeport = (fire  ? 0x01 : 0) |
-                  (left  ? 0x02 : 0) |
-                  (right ? 0x04 : 0) |
-                  (down  ? 0x08 : 0) |
-                  (up    ? 0x10 : 0);
+                 (left  ? 0x02 : 0) |
+                 (right ? 0x04 : 0) |
+                 (down  ? 0x08 : 0) |
+                 (up    ? 0x10 : 0);
       #endif
-      yield();
+      //yield();
     }
     long cur;
     #ifdef JOYSTICK_SUPPORT
@@ -308,9 +313,13 @@ extern "C" {
                 ((digitalRead(pin_joy_down)  == LOW) ? 0x08 : 0) |
                 ((digitalRead(pin_joy_up)    == LOW) ? 0x10 : 0);  */
     if (fakeport_old != fakeport) {
+        //GPIO_REG_WRITE(GPIO_OUT_W1TS_ADDRESS, _BV(D0));
+        digitalWrite(D0, 1);
         fakeport_old = fakeport;
         Serial.print("fakeport = ");
-        Serial.printf("%02x  data = %02x %02x %02x\n", fakeport, data[0], data[1], data[2]);
+        Serial.printf("%02x  data = %02x %02x %02x %02x %02x %02x %02x %02x\n", fakeport, data[0], data[1], data[2], data[3], data[4], data[5], data[6], data[7]);
+        digitalWrite(D0, 0);
+        //GPIO_REG_WRITE(GPIO_OUT_W1TC_ADDRESS, _BV(D0));
     }
 
 		if (waitForFire) {
@@ -325,9 +334,9 @@ extern "C" {
       if (lastTime > cur) {
         lastTime -= (1 << 31);
       }
-      if ((cur - start) > 5) {
+      if ((cur - now) > 5) {
         delay(5);
-        start = cur;   
+        now = cur;   
       }
     } while ((cur - lastTime) < ms);
     lastTime = cur;
@@ -400,9 +409,13 @@ void setup() {
   EEPROM.begin(512);
 #endif
   Serial.begin(115200);
-  WiFi.begin (WLAN_SSID, WLAN_PASSWORD);
+  //myPinMode(D0, OUTPUT);
+  pinMode(D0, OUTPUT);
+  pinMode(D2, OUTPUT);
+  /*
+  //WiFi.begin (WLAN_SSID, WLAN_PASSWORD);
   // Wait for connection
-  while ( WiFi.status() != WL_CONNECTED ) {
+  //while ( WiFi.status() != WL_CONNECTED ) {
     delay ( 500 );
     Serial.print ( "." );
   }
@@ -430,6 +443,7 @@ void setup() {
   IPAddress ip = WiFi.localIP();
   sprintf(test, "</# WLAN=" WLAN_SSID " ip= %d.%d.%d.%d", ip[0], ip[1], ip[2], ip[3]);
   scrolltext(test);
+  */
 }
 
 void loop() {
