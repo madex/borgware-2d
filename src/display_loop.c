@@ -100,12 +100,12 @@ void display_loop(){
 			scrolltext(scrolltext_text);
 
 	#ifdef RANDOM_SUPPORT
-			{
+		/*	{
 				char a[28];
 				sprintf(a,"</# counter == %lu  ",
 					(unsigned long)percnt_get(&g_reset_counter, &g_reset_counter_idx));
 				scrolltext(a);
-			}
+			}*/
 	#endif
 #endif
 #ifdef ANIMATION_TIME

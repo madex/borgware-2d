@@ -69,11 +69,14 @@ extern "C" {
     #include "animations/bitmapscroller/bitmapscroller.c"
     #include "animations/bitmapscroller/thisisnotdetroit.c"
     #include "animations/moire.c"
-    //#include "animations/borg_time.c"
+    #include "animations/borg_time_esp.c"
     #include "animations/matrix.c"
     void pixel_init();
 }
 //#include "HexDump.h"
+/* Configuration of NTP */
+#define MY_NTP_SERVER "at.pool.ntp.org"           
+#define MY_TZ "CET-1CEST,M3.5.0/02,M10.5.0/03"
 
 volatile unsigned char fakeport = 0;
 volatile unsigned char fakeportNet = 0;
@@ -88,10 +91,16 @@ extern "C" {
 #include <Adafruit_NeoPixel.h>
 #include <ESP8266WiFi.h>
 #include <WiFiClient.h>
-#include <ESP8266WebServer.h>
+#include <ESPAsyncTCP.h>
 #include <ESP8266mDNS.h>
+#include <ESPAsyncWebServer.h>
+#include <AsyncElegantOTA.h>
 #include "wlan_key.h"
-ESP8266WebServer server ( 80 );
+#include <time.h>                   // for time() ctime()
+AsyncWebServer server(80);
+/* Globals */
+time_t now;                         // this are the seconds since Epoch (1970) - UTC
+struct tm tm;                       // the structure tm holds time information in a more convenient way
 
 // Which pin on the Arduino is connected to the NeoPixels?
 // On a Trinket or Gemma we suggest changing this to 1
@@ -214,9 +223,7 @@ void IRAM_ATTR joyEsp(uint32_t pin,  uint8_t *dataRead, uint32_t numBytes) {
 // Note that for older NeoPixel strips you might need to change the third parameter--see the strandtest
 // example for more information on possible values.
 Adafruit_NeoPixel pixels = Adafruit_NeoPixel(NUMPIXELS, pin_ws2812, NEO_GRB + NEO_KHZ800);
-typedef struct {
-  unsigned char r, g, b;
-} color_t;
+
 color_t colorMap[NUMPLANE+1] = {{0, 0, 0}, {3, 1, 0}, {20, 1, 0}, {140, 0, 0}};
 uint8_t mapPix[16][16];
 unsigned char pixmap[NUMPLANE][NUM_ROWS][LINEBYTES];
@@ -230,25 +237,49 @@ void initMap() {
     }
   }
 }
-
+bool color = false;
 //#include "HexDump.h"
 void show() {
-  for (short x = 0; x < NUM_COLS; x++) {
-    for (short y = 0; y < NUM_ROWS; y++) {
-      short col = 0;
-      for (short level = 0; level < NUMPLANE; level++) {
-        if (pixmap[level][y % NUM_ROWS][x / 8] & (1 << (x % 8))) {
-          col = level + 1;
+  if (!color) {
+    for (short x = 0; x < NUM_COLS; x++) {
+      for (short y = 0; y < NUM_ROWS; y++) {
+        short col = 0;
+        for (short level = 0; level < NUMPLANE; level++) {
+          if (pixmap[level][y % NUM_ROWS][x / 8] & (1 << (x % 8))) {
+            col = level + 1;
+          }
         }
+        color_t *c = &colorMap[col];
+        pixels.setPixelColor(mapPix[x][y], pixels.Color(c->r, c->g, c->b)); 
       }
-      color_t *c = &colorMap[col];
-      pixels.setPixelColor(mapPix[x][y], pixels.Color(c->r, c->g, c->b)); 
     }
+  } else {
+    color = false;
   }
   pixels.show(); // This sends the updated pixel color to the hardware.
 }
 
+void set_color_frame(void) {
+  color = true;
+}
+
+/**
+ * @brief Set the color of a pixel in c
+ * 
+ * @param x x-coord 0-15
+ * @param y y-coord 0-15
+ * @param r red
+ * @param g green
+ * @param b blue
+ */
+void set_color_pixel(uint8_t x, uint8_t y, uint8_t r, uint8_t g, uint8_t b) {
+  if ((x < 16) && (y < 16)) {
+    pixels.setPixelColor(mapPix[x][y], pixels.Color(r, g, b));
+  }
+}
+
 uint8_t joyRead() {
+  return 0;
   
 }
 extern "C" {
@@ -278,7 +309,7 @@ extern "C" {
     static long lastTimeShow = -20;
     long now = millis();
     uint8_t data[4] = {0, 0, 0, 0};
-    if ((now - lastTimeShow) >= 20) {
+    if ((now - lastTimeShow) >= 20) || (ms >= 20) {
       lastTimeShow = now;
       show();
       #ifdef GAMECUBE
@@ -296,7 +327,6 @@ extern "C" {
       #endif
       fakeport |= fakeportNet;
       fakeportNet = 0;
-      server.handleClient();
       yield();
     }
     long cur;
@@ -334,73 +364,10 @@ extern "C" {
   }
 }
 
-void handleRoot() {
-  server.send( 200, "text/html", "<!DOCTYPE html>\
-<html><body>\
-<input type=\"text\" id=\"in\" size=\"40\" onkeydown=\"keyEv(event)\">\
-<script>function keyEv(event){var x = event.which || event.keyCode;\
- let xhr = new XMLHttpRequest(), req;\
-    switch(x) {\
-        case 32: req=\"f\";break;\
-        case 37: case 65: req=\"l\";break;\
-        case 39: case 68: req=\"r\";break;\
-        case 38: case 87: req=\"u\";break;\
-        case 40: case 83: req=\"d\";break;\
-        default: return;\
-    }\
-    xhr.open(\"GET\", req, true); xhr.send();\
-    document.getElementById(\"in\").value = \"\";\
-}\
-</script></body></html>" );
-}
-
-void handleNotFound() {
-  String message = "File Not Found\n\n";
-  message += "URI: ";
-  message += server.uri();
-  message += "\nMethod: ";
-  message += ( server.method() == HTTP_GET ) ? "GET" : "POST";
-  message += "\nArguments: ";
-  message += server.args();
-  message += "\n";
-
-  for ( uint8_t i = 0; i < server.args(); i++ ) {
-    message += " " + server.argName ( i ) + ": " + server.arg ( i ) + "\n";
-  }
-
-  server.send ( 404, "text/plain", message );
-}
-
-void keyCmdLeft() {
-    Serial.println('l');
-    fakeportNet |= 2;
-    server.send ( 200, "text/plain", "" );
-}
-void keyCmdRight() {
-    fakeportNet |= 4;
-    Serial.println('r');
-    server.send ( 200, "text/plain", "" );
-}
-void keyCmdUp() {
-    fakeportNet |= 16;
-    Serial.println('u');
-    server.send ( 200, "text/plain", "" );
-}
-void keyCmdDown() {
-    fakeportNet |= 8;
-    Serial.println('d');
-    server.send ( 200, "text/plain", "" );
-}
-void keyCmdFire() {
-    fakeportNet |= 1;
-    Serial.println('f');
-    server.send ( 200, "text/plain", "" );
-}
-
-
 void setup() {
   ESP.wdtDisable();
   ESP.wdtEnable(WDTO_8S);
+
   initMap();
   pixels.begin();
 #ifdef ESP8266
@@ -409,7 +376,8 @@ void setup() {
   Serial.begin(115200);
   //pinMode(D0, OUTPUT);
   //pinMode(D2, OUTPUT);
-  
+  configTime(MY_TZ, MY_NTP_SERVER); // --> Here is the IMPORTANT ONE LINER needed in your sketch!
+
   WiFi.begin (WLAN_SSID, WLAN_PASSWORD);
   // Wait for connection
   uint8_t timout = 20;
@@ -435,13 +403,51 @@ void setup() {
   if ( MDNS.begin ( "borg" ) ) {
     Serial.println ( "MDNS responder started" );
   }
-  server.on("/", handleRoot);
-  server.on("/l", keyCmdLeft);
-  server.on("/r", keyCmdRight);
-  server.on("/u", keyCmdUp);
-  server.on("/d", keyCmdDown);
-  server.on("/f", keyCmdFire);
-  server.onNotFound(handleNotFound);
+  server.on("/", HTTP_GET, [](AsyncWebServerRequest *request){
+        request->send(200, "text/plain", R"(
+  <!DOCTYPE html>
+  <html><body>
+  <h1>ESP borgware-2d</h1>
+  <input type="text" id="in" size="40" onkeydown="keyEv(event) "><br>
+  <a href="/update">FW-Update</a><br>
+  <script>function keyEv(event){var x = event.which || event.keyCode;
+  let xhr = new XMLHttpRequest(), req;
+      switch(x) {
+          case 32: req="f";break;
+          case 37: case 65: req="l";break;
+          case 39: case 68: req="r";break;
+          case 38: case 87: req="u";break;
+          case 40: case 83: req="d";break;
+          default: return;
+      }
+      xhr.open("GET", req, true); xhr.send();
+      document.getElementById("in").value = "";
+  }
+  </script></body></html>
+  )");
+        
+  });
+  server.on("/l", HTTP_GET, [](AsyncWebServerRequest *request) {
+    fakeportNet |= 2;
+    request->send ( 200, "text/plain", "" );
+  });
+  server.on("/r", HTTP_GET, [](AsyncWebServerRequest *request) {
+    fakeportNet |= 4;
+    request->send ( 200, "text/plain", "" );
+  });
+  server.on("/u", HTTP_GET, [](AsyncWebServerRequest *request) {
+    fakeportNet |= 16;
+    request->send ( 200, "text/plain", "" );
+  });
+  server.on("/d", HTTP_GET, [](AsyncWebServerRequest *request) {
+    fakeportNet |= 8;
+    request->send ( 200, "text/plain", "" );
+  });
+  server.on("/f", HTTP_GET, [](AsyncWebServerRequest *request) {
+    fakeportNet |= 1;
+    request->send ( 200, "text/plain", "" );
+  });
+  AsyncElegantOTA.begin(&server);
   server.begin();
   Serial.println("HTTP server started");
   char test[256];
@@ -453,4 +459,3 @@ void setup() {
 void loop() {
     display_loop();
 }
-

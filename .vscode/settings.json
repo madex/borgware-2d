@@ -26,6 +26,24 @@
         "makros.h": "c",
         "iterator": "c",
         "string": "c",
-        "string_view": "c"
+        "string_view": "c",
+        "lap.h": "c",
+        "scrolltext.h": "c",
+        "config.h": "c",
+        "fairydust.c": "cpp",
+        "thisisnotdetroit.c": "cpp",
+        "variant_bastet.h": "c",
+        "tetris_main.h": "c",
+        "variants.h": "c",
+        "bucket.h": "c",
+        "pixel.h": "c",
+        "time.h": "c",
+        "__bit_reference": "cpp",
+        "__hash_table": "cpp",
+        "__split_buffer": "cpp",
+        "array": "cpp",
+        "initializer_list": "cpp",
+        "unordered_map": "cpp",
+        "vector": "cpp"
     }
 }
