@@ -44,6 +44,18 @@
         "array": "cpp",
         "initializer_list": "cpp",
         "unordered_map": "cpp",
-        "vector": "cpp"
+        "vector": "cpp",
+        "__locale": "c",
+        "stonefly.c": "cpp",
+        "ltn_ant.c": "cpp",
+        "squares.c": "cpp",
+        "flyingdots.c": "cpp",
+        "score.c": "cpp",
+        "rebound.c": "cpp",
+        "playfield.c": "cpp",
+        "invader_draw.c": "cpp",
+        "stdint.h": "c",
+        "breakout_demo.c": "cpp",
+        "snake_game.c": "cpp"
     }
 }

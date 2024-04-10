@@ -113,6 +113,7 @@ void display_loop(){
 		case 1:
 #endif
 			time_anim();
+			plasma_anim(1000);
 			break;
 #else
 #ifdef ANIMATION_SCROLLTEXT

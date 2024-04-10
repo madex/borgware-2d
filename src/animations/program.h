@@ -26,5 +26,5 @@ void joern1();
 void checkerboard(unsigned char times);
 void fire();
 void random_bright(unsigned cycles);
-
+void plasma_anim(uint32_t length);
 #endif /* PROGRAMM_H_ */

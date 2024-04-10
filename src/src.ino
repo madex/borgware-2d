@@ -50,6 +50,7 @@ extern "C" {
     #include "games/snake/snake_game.c"
     //#include "uart/uart_commands.c"
     //#include "uart/uart.c"
+    #include "animations/plasma.c"
     #include "animations/breakout_demo.c"
     #include "animations/flyingdots.c"
     #include "animations/squares.c"
@@ -444,7 +445,7 @@ void setup() {
     request->send ( 200, "text/plain", "" );
   });
   server.on("/f", HTTP_GET, [](AsyncWebServerRequest *request) {
-    fakeportNet |= 1;
+    fakeportNet |= 1; 
     request->send ( 200, "text/plain", "" );
   });
   AsyncElegantOTA.begin(&server);
