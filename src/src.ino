@@ -309,7 +309,7 @@ extern "C" {
     static long lastTimeShow = -20;
     long now = millis();
     uint8_t data[4] = {0, 0, 0, 0};
-    if ((now - lastTimeShow) >= 20) || (ms >= 20) {
+    if (((now - lastTimeShow) >= 20) || (ms >= 20)) {
       lastTimeShow = now;
       show();
       #ifdef GAMECUBE
@@ -404,7 +404,7 @@ void setup() {
     Serial.println ( "MDNS responder started" );
   }
   server.on("/", HTTP_GET, [](AsyncWebServerRequest *request){
-        request->send(200, "text/plain", R"(
+        request->send(200, "text/html", R"(
   <!DOCTYPE html>
   <html><body>
   <h1>ESP borgware-2d</h1>
