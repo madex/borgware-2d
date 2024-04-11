@@ -305,11 +305,17 @@ extern "C" {
     return (uint16_t) EEPROM.read((uint32_t)p);
   }
   
+  bool showScrolltext;
+
+
   void b2d_wait(int ms) {
     static long lastTime = 0;
     static long lastTimeShow = -20;
     long now = millis();
     uint8_t data[4] = {0, 0, 0, 0};
+    if (showScrolltext) {
+      longjmp(newmode_jmpbuf, 1);
+    }
     if (((now - lastTimeShow) >= 20) || (ms >= 20)) {
       lastTimeShow = now;
       show();
@@ -406,25 +412,114 @@ void setup() {
   }
   server.on("/", HTTP_GET, [](AsyncWebServerRequest *request){
         request->send(200, "text/html", R"(
-  <!DOCTYPE html>
-  <html><body>
-  <h1>ESP borgware-2d</h1>
-  <input type="text" id="in" size="40" onkeydown="keyEv(event) "><br>
-  <a href="/update">FW-Update</a><br>
-  <script>function keyEv(event){var x = event.which || event.keyCode;
-  let xhr = new XMLHttpRequest(), req;
-      switch(x) {
-          case 32: req="f";break;
-          case 37: case 65: req="l";break;
-          case 39: case 68: req="r";break;
-          case 38: case 87: req="u";break;
-          case 40: case 83: req="d";break;
-          default: return;
+<!DOCTYPE html>
+<html>
+<head>
+    <title>ESP borgware-2d</title>
+    <style>
+      body {
+          font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif;
+          background-color: #f2f2f2;
+          margin: 0;
+          padding: 0;
+          text-align: center;
       }
-      xhr.open("GET", req, true); xhr.send();
-      document.getElementById("in").value = "";
-  }
-  </script></body></html>
+      h1 {
+          color: #333;
+      }
+      input[type="text"] {
+          padding: 10px;
+          size: 80px;
+          border-radius: 5px;
+          border: 1px solid #ccc;
+          margin-bottom: 10px;
+      }
+      a {
+          color: #007bff;
+          text-decoration: none;
+      }
+      a:hover {
+          text-decoration: underline;
+      }
+      button {
+          padding: 10px 20px;
+          border: none;
+          border-radius: 5px;
+          background-color: #007bff;
+          color: #fff;
+          cursor: pointer;
+      }
+      button:hover {
+          background-color: #0056b3;
+      }
+      label {
+          display: block;
+          margin-bottom: 5px;
+          size: 20px;
+      }
+      p {
+          margin: 0;
+      }
+    </style>
+</head>
+
+<body>
+    <h1>ESP borgware-2d</h1>
+    <label for="in">Open Play with WASD:</label>
+    <input type="text" id="in" onkeydown="keyEv(event) "><br>
+    <form id="scrollForm">
+        <label for="scroll">Show Text:</label>
+        <input name="scroll" type="text" value="<# Hallo"><br>
+        <button type="button" class="submit" onclick="submitForm() ">Send</button>
+    </form><br>
+    <a href="/update">FW-Update</a><br>
+    <script>
+        function keyEv(event) {
+            var x = event.which || event.keyCode;
+            let req;
+            switch (x) {
+                case 32:
+                    req = "f";
+                    break;
+                case 37:
+                case 65:
+                    req = "l";
+                    break;
+                case 39:
+                case 68:
+                    req = "r";
+                    break;
+                case 38:
+                case 87:
+                    req = "u";
+                    break;
+                case 40:
+                case 83:
+                    req = "d";
+                    break;
+                default:
+                    return;
+            }
+            let xhr = new XMLHttpRequest();
+            xhr.open("GET", req, true);
+            xhr.send();
+            document.getElementById("in").value = "";
+        }
+
+        function submitForm() {
+            var formData = new FormData(document.getElementById("scrollForm")); // Holen Sie sich die Formulardaten
+            var xhr = new XMLHttpRequest();
+            xhr.open("POST", "/scroll", true);
+            xhr.onreadystatechange = function() {
+                if (xhr.readyState === XMLHttpRequest.DONE && xhr.status === 200) {
+                    console.log(xhr.responseText);
+                }
+            };
+            xhr.send(formData);
+        }
+    </script>
+</body>
+</html>
   )");
         
   });
@@ -448,12 +543,18 @@ void setup() {
     fakeportNet |= 1; 
     request->send ( 200, "text/plain", "" );
   });
+  server.on("/scroll", HTTP_POST, [](AsyncWebServerRequest *request) {
+    AsyncWebParameter * j = request->getParam(0); // 1st parameter
+    strncpy(scrolltext_text, j->value().c_str(), sizeof(scrolltext_text));
+    showScrolltext = true;
+    request->send ( 200, "text/plain", "" );
+  });
   AsyncElegantOTA.begin(&server);
   server.begin();
   Serial.println("HTTP server started");
-  char test[256];
+  //char test[256];
   IPAddress ip = WiFi.localIP();
-  sprintf(test, "</#   WLAN=" WLAN_SSID " ip= %d.%d.%d.%d ", ip[0], ip[1], ip[2], ip[3]);
+  //sprintf(test, "</#   WLAN=" WLAN_SSID " ip= %d.%d.%d.%d ", ip[0], ip[1], ip[2], ip[3]);
   //scrolltext(test);
 }
 
